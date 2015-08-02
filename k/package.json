@@ -19,7 +19,18 @@
     "org.apache.cordova.network-information",
     "org.apache.cordova.splashscreen",
     "org.apache.cordova.device",
-    "org.apache.cordova.dialogs"
+    "org.apache.cordova.dialogs",
+    "org.apache.cordova.inappbrowser",
+    "org.apache.cordova.globalization",
+    {
+      "locator": "https://github.com/apache/cordova-plugin-whitelist.git#r1.0.0",
+      "id": "cordova-plugin-whitelist"
+    }
   ],
-  "cordovaPlatforms": []
+  "cordovaPlatforms": [
+    {
+      "platform": "android",
+      "locator": "./engine/cordova-android-c0.6.1/"
+    }
+  ]
 }

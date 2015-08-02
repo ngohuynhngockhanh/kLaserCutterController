@@ -9,15 +9,6 @@ angular.module('kLaserCutterControoler.controllers', [])
     
 	Socket.connect('http://192.168.1.103:90/', $scope);
 	Canvas.init('coordsCanvas');
-	window.plugins.mfilechooser.open([], function (uri) {
-
-      alert(uri);
-
-    }, function (error) {
-
-        alert(error);
-
-    });
 }])
 
 .controller('ChatsCtrl', function($scope, Chats) {
