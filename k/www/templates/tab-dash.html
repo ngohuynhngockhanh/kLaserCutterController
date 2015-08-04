@@ -2,7 +2,7 @@
   <ion-content class="padding">
   <div id="container"></div>
     <div class="list card">
-      <div class="item item-divider">{{'VISUALIZER' | translate}}&nbsp;&nbsp;
+      <div class="item item-divider">{{'VISUALIZER' | translate}}&nbsp;{{status}}&nbsp;
           <label for="file" class="fileContainer" ng-show="!socket.canStop">           
            <span class="button button-small button-positive">{{'UPLOAD_A_FILE' | translate}}</span>
            <input type="file" id="siofu_input" />
@@ -41,47 +41,25 @@
                   </div>
                 </div>    
               </div>
-              <div class="item item-icon-left" href="#">
-                <i class="icon ion-gear-b"></i>
-                {{'WORK_COORDINATES' | translate}} {{status}} 
-              </div>
               <div class="row responsive-sm">
+                <div class="col commandMonitor">
+                  <ion-scroll zooming="true" id="commandMonitorScrolling" delegate-handle="commandMonitor" direction="xy">
+                    <div id="commandMonitor"></div>
+                  </ion-scroll>
+                </div>                
+              </div>
+            
+              <div class="row responsive-sm" ng-show="!socket.canStop">
                 <div class="col">
-                  <div class="item item-thumbnail-left">
-                    <img ng-src="img/_x.jpg">
-                    <h2>{{work.x}}</h2>
-                    <p>{{unit}}</p>
-                  </div>
+                  <label class="item item-input">
+                    <span class="input-label">{{'COMMANDLINE' | translate}}</span>
+                    <form ng-submit="socket.commandSubmit()">
+                      <input type="text" style="padding-left:-20px;" ng-model="socket.commandLine">
+                    </form>
+                  </label>        
                 </div>
-                <div class="col">
-                  <div class="item item-thumbnail-left">
-                    <img ng-src="img/_y.jpg">
-                    <h2>{{work.y}}</h2>
-                    <p>{{unit}}</p>
-                  </div>
-                </div>    
               </div>
           </div>   
-        </div>
-      </div>
-    </div>
-    <div class="list card">
-      <div class="item item-divider">Recent Updates</div>
-      <div class="item item-body">
-        <div>
-            
-         
-         <input type="button" ng-click="unpause()" value="unpause" />
-         <input type="button" ng-click="pause()" value="pause" />
-        </div>
-      </div>
-    </div>
-    
-    <div class="list card">
-      <div class="item item-divider">Upcoming</div>
-      <div class="item item-body">
-        <div>
-          You have <b>29</b> meetings on your calendar tomorrow.
         </div>
       </div>
     </div>

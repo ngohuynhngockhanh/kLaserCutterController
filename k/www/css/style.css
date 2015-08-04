@@ -19,3 +19,14 @@
 	margin-top:-5px;
 	font-size:14px;
 }
+div.commandMonitor {	
+	font: 12px Consolas,"Liberation Mono",Menlo,Courier,monospace;
+}
+#commandMonitorScrolling {
+	width: 100%;
+	height:150px;
+	border:1px solid black;
+} 
+#commandMonitorScrolling div {
+	padding: 2px;
+}

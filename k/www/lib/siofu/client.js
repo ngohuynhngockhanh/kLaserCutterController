@@ -82,10 +82,6 @@
 	 */
 	var _listenedReferences = [];
 	var _listenTo = function (object, eventName, callback, bubble) {
-		console.log(object);
-		console.log(eventName);
-		console.log(callback);
-		console.log(bubble);
 		object.addEventListener(eventName, callback, bubble);
 		_listenedReferences.push(arguments);
 	};

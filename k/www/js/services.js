@@ -115,14 +115,18 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 		}
 	}
 })
-.factory('Socket', ['Config', 'GCode', 'Canvas', "ngProgressFactory", "$ionicPopup", "$filter", function(Config, GCode, Canvas, ngProgressFactory, $ionicPopup, $filter) {
+.factory('Socket', ['Config', 'GCode', 'Canvas', "ngProgressFactory", "$ionicPopup", "$filter", "$ionicScrollDelegate", function(Config, GCode, Canvas, ngProgressFactory, $ionicPopup, $filter, $ionicScrollDelegate) {
 	//open socket
     var socket, uploader, scope;
     var machineRunning = false;
-    var circle = undefined; 
+    var circle = undefined,
+    	settings = {},
+    	connected = false,
+    	MAX_COMMAND_MONITOR_LENGTH = 100; 
     var progressbar = ngProgressFactory.createInstance(),
     	startedTime = 0,
     	commandToDoLength = 1;
+    	progressbar.setHeight('3px');
     var setStatus = function (status) {
 		scope.socket.canStart = (status >> 3) & 1;
 		scope.socket.canStop = (status >> 2) & 1;
@@ -150,6 +154,21 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 		var h = intval(t / 60 / 60);
 		return sprintf("%02d:%02d:%02d", h, m, s);
 	}
+	var monitor = $("#commandMonitor");
+	var writeToCommandMonitor = function(command) {
+		if (scope.socket.commandMonitor.length > MAX_COMMAND_MONITOR_LENGTH)
+			scope.socket.commandMonitor.shift();
+		scope.socket.commandMonitor.push(command);
+		var monitor = $("#commandMonitor");
+		monitor.html(scope.socket.commandMonitor.join("<br />"));
+		 $ionicScrollDelegate.$getByHandle('commandMonitor').scrollBottom();
+	}
+	var commandSubmit = function() {
+		var cmd = scope.socket.commandLine;
+		scope.socket.commandLine = "";
+		socket.emit("cmd", cmd);
+		writeToCommandMonitor("> " + cmd);
+	}
     return {
     	setStatus: setStatus,
     	setStatusFromNode: setStatusFromNode,
@@ -164,11 +183,14 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 			$scope.socket.canStop = false;
 			$scope.socket.canPause = false;
 			$scope.socket.canUnpause = false;
+			$scope.socket.commandMonitor = [];
+			$scope.socket.commandSubmit = commandSubmit;
 			return $scope;
     	},    	
-    	connect: function(host, $scope) {
+    	connect: function(host, $scope, settings) {
     		$scope = $scope || undefined;
-    		
+    		settings = settings || {};
+    		settings.maxQueueElement = settings.maxQueueElement || 200;
     		//setup scope
     		if ($scope != undefined) {
 	    		$scope = this.initScope($scope);
@@ -185,54 +207,108 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 		    uploader = new SocketIOFileUpload(socket);
 	    	var file_input = document.getElementById("siofu_input");
 	    	uploader.listenOnInput(file_input);
+	    	uploader.addEventListener('choose', function(e) {
+		    	var files = e.files;
+		    	for (var i = 0; i < files.length; i++) {
+		    		var file = files[i];
+		    		var fileSize = file.size;
+		    		if (fileSize > settings.maxFileSize) {
+		    			scope.alert(sprintf($filter('translate')('ERROR_UPLOAD_MAX_FILE_SIZE'), settings.maxFileSize / 1024 / 1024));
+		    			return false;
+		    		}
+		    	}
+		    });
 		    uploader.addEventListener('start', function(e) {
 		    	progressbar.start();
-		    	console.log(e);
+		    	
 		    });
 		    uploader.addEventListener('progress', function(event) {
-		    	progressbar.set(event.bytesLoaded / event.file.size * 95);
+		    	var percent = event.bytesLoaded / event.file.size * 95;
+		    	if (percent <= 95)
+		    		progressbar.set(percent);
+		    	else
+		    		progressbar.start();
+		    	
 		    });
 		    
 		    
 		    //setup socket
 		    socket.on("connect", function() {
+		    	connected = true;
 		    	waitTime = (ionic.Platform.isAndroid()) ? 2000 : 1500;		
 	    		setTimeout(function() {
 	    			socket.emit('requestQueue');
 	    		}, waitTime);
 		    });
-		    socket.on("position", function(data , machineRunning, machinePause) {
-		    	setStatusFromNode(machineRunning, machinePause);
-		    	if (!scope.machine)
-		    		scope.machine = new Vec2(0, 0);
-		    	scope.machine.set(round(floatval(data[1]), 5), round(floatval(data[2]), 5));
-				if (!scope.work)
-		    		scope.work = new Vec2(0, 0);
-		    	scope.work.set(round(floatval(data[4]), 5), round(floatval(data[5]), 5));
-		    	var y = scope.machine.y * Canvas.constConvert();
-		    	var x = scope.machine.x * Canvas.constConvert();
-		    	
-		    	scope.status = '[' + data[0] + ']';
-		    	
-		    	Canvas.renderOnAddRemove(true);
-		    	if (circle == undefined) {
-		    		circle = Canvas.drawCircle({top: y, left: x});
-		    		Canvas.add(circle);	
-		    	} else {
-		    		circle.setTop(Canvas.formatY(y));
-		    		circle.setLeft(Canvas.formatX(x));
-		    		Canvas.render();
+		    socket.on("disconnection", function() {
+		    	if (connected) {
+		    		scope.alert($filter('translate')('CANT_CONNECT_TO_SERVER'));
 		    	}
+		    	connected = false;
+		    });
+		    
+		    
+		    socket.on('percent', function() {
+		    	progressbar.reset();
+		    	progressbar.start();
+		    });
+		    socket.on("error", function(error) {
+		    	var print = JSON.stringify(error);
+		    	writeToCommandMonitor(print);	 
+		    });
+		    socket.on("data", function(data) {
+		    	writeToCommandMonitor(data);	 
+		    });
+		    socket.on("settings", function(argv) {
+		    	for (k in argv) {
+		    		settings[k] = argv[k];
+		    	}
+		    });
+		    socket.on('sendSVG', function(content) {
+		    	var index = content.indexOf("viewBox");
+		    	if (index > -1)
+		    		return;
 		    	
-		    	if (startedTime > 0)
-		    		scope.startedTime = formatClock();
-		    	
-		    	scope.$apply();
+				var src = 'data:image/svg+xml;base64,'+base64_encode(content);
+				Canvas.addSVG(src, 0,  0);
+				Canvas.render();
+			    	
+		    });
+		    socket.on("position", function(data , machineRunning, machinePause) {
+		    	if (Canvas.canvas() != undefined) {
+			    	setStatusFromNode(machineRunning, machinePause);
+			    	if (!scope.machine)
+			    		scope.machine = new Vec2(0, 0);
+			    	scope.machine.set(round(floatval(data[1]), 5), round(floatval(data[2]), 5));
+					if (!scope.work)
+			    		scope.work = new Vec2(0, 0);
+			    	scope.work.set(round(floatval(data[4]), 5), round(floatval(data[5]), 5));
+			    	var y = scope.machine.y * Canvas.constConvert();
+			    	var x = scope.machine.x * Canvas.constConvert();
+			    	
+			    	scope.status = '[' + data[0] + ']';
+			    	
+			    	Canvas.renderOnAddRemove(true);
+			    	if (circle == undefined) {
+			    		circle = Canvas.drawCircle({top: y, left: x});
+			    		Canvas.add(circle);	
+			    	} else {
+			    		circle.setTop(Canvas.formatY(y));
+			    		circle.setLeft(Canvas.formatX(x));
+			    		Canvas.render();
+			    	}
+			    	
+			    	if (startedTime > 0)
+			    		scope.startedTime = formatClock();
+			    	
+			    		    	
+			    	scope.$apply();
+			    }
 		    });
 		    
 		    var prevPoint = new Vec2(0, 0);
-			socket.on("gcode", function(data, timer2) {
-				startedTime = timer2;			
+			socket.on("gcode", function(data, timer2) {				
+				startedTime = timer2;
 		    	var x = GCode.getPosFromCommand('X', data.command);
 		    	var y = GCode.getPosFromCommand('Y', data.command);
 		    	var nowPoint = prevPoint.clone();
@@ -252,7 +328,8 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 		    	}		
 		    	var percent = 99.9 - (data.length / commandToDoLength * 99.9);
 		    	scope.jobPercent = sprintf("(%3.1f", percent) + '%)';
-		    	progressbar.set(percent);    	
+		    	progressbar.set(percent);
+		    	writeToCommandMonitor('> ' + data.command);	    	
 		    });
 		    socket.on('AllGcode', function(list) {		    	
 		    	progressbar.complete();
@@ -306,6 +383,7 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 	var minusWidth = 15,
 		minusHeight = 15,
 		endPointLength = 0.01,
+		mm2px = 3.54330708664,
 		width,
 		jCanvas,
 		height,
@@ -382,12 +460,14 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 		canvas.add(drawLine([0, 0, width, 0, true]));		//x coordinate
 		canvas.add(drawLine([0, 0, 0, height, true]));	//y coordinate
 		canvas.renderOnAddRemove = false;
+		if (ionic.Platform.isAndroid())
+			$("#commandMonitorScrolling").attr('style', 'height:200px;');
 	}
 	function init(id) {		
 		if (ionic.Platform.isAndroid()) {
 			setTimeout(function() {
 				_init(id);
-			}, 1000);
+			}, 1200);
 		} else
 			 _init(id);
 		
@@ -430,7 +510,8 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 	}
 	
 	
-	return {		
+	return {	
+		SVGobj: null,	
 		init: function (id) {
 			init(id);
 		},
@@ -446,7 +527,7 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 		create: function() {
 			this.renderOnAddRemove(false);
 			vec_array = GCode.getList();	
-			var mm2px = 3.54330708664;
+			
 			this.removePath();
 			var maxPoint = GCode.getMax().multiply(mm2px);
 			constConvert = (maxPoint.x > maxPoint.y) ? maxPoint.x : maxPoint.y;
@@ -459,8 +540,31 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 			
 		},
 		add: function(object) {
-			if (canvas)
-				canvas.add(object);
+			canvas.add(object);
+		},
+		addSVG: function(src, x, y) {
+			if (this.SVGobj != null)
+				canvas.remove(this.SVGobj);
+			var obj;// = new fabric.Image({src: src});
+			var _this = this;
+			fabric.Image.fromURL(src, function(oImg) {
+				obj = oImg;
+				x = x || 0;
+				x = formatX(x);
+				y = y || 0;
+				y = formatY(y);
+				obj.scale(constConvert / mm2px);
+				//x *= constConvert / mm2px;
+				//y *= constConvert / mm2px
+				obj.setTop(y);
+				obj.setLeft(x);
+				obj.selectable = false;
+				obj.setOriginY('bottom');
+				obj.setOriginX('left');
+				_this.SVGobj = obj;
+				_this.add(obj);
+			});
+			
 		},
 		drawCircle: drawCircle,
 		drawText:	drawText,
@@ -469,12 +573,10 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 			return constConvert;
 		},
 		render: function() {
-			if (canvas)
-				canvas.renderAll();
+			canvas.renderAll();
 		},
 		renderOnAddRemove: function(bool) {
-			if (canvas)
-				canvas.renderOnAddRemove = bool;
+			canvas.renderOnAddRemove = bool;
 		},
 		formatX: formatX,
 		formatY: formatY
