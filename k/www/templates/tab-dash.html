@@ -54,7 +54,7 @@
                   <label class="item item-input">
                     <span class="input-label">{{'COMMANDLINE' | translate}}</span>
                     <form ng-submit="socket.commandSubmit()">
-                      <input type="text" style="padding-left:-20px;" ng-model="socket.commandLine">
+                      <input type="text" style="padding-left:-20px; border:1px solid black;width:100%;" ng-model="socket.commandLine">
                     </form>
                   </label>        
                 </div>
@@ -62,6 +62,9 @@
           </div>   
         </div>
       </div>
+    </div>
+    <div ng-show="socket.showMJPG">
+        <img ng-src="{{socket.mjpg}}" /> 
     </div>
   </ion-content>
 </ion-view>

@@ -80,12 +80,12 @@ angular.module('kLaserCutterController', [
     }
   })
 
-  .state('tab.chats', {
-      url: '/chats',
+  .state('tab.settings', {
+      url: '/settings',
       views: {
-        'tab-chats': {
-          templateUrl: 'templates/tab-chats.html',
-          controller: 'ChatsCtrl'
+        'tab-settings': {
+          templateUrl: 'templates/tab-settings.html',
+          controller: 'SettingsCtrl'
         }
       }
     })
