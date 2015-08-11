@@ -1,6 +1,6 @@
 angular.module('kLaserCutterControoler.controllers', [])
 
-.controller('DashCtrl', ["$scope", "Config", "Socket", "Canvas", "$ionicPopup", "$filter", function($scope, Config, Socket, Canvas, $ionicPopup, $filter) {
+.controller('DashCtrl', ["$scope", "Config", "Socket", "Canvas", "$ionicPopup", "$filter", "$ionicPosition", function($scope, Config, Socket, Canvas, $ionicPopup, $filter, $ionicPosition) {
 	var socket_host = Config.get('socket_host');
 	$scope.$on('$ionicView.enter', function(e) {
 		var new_host = Config.get('socket_host');
@@ -29,8 +29,11 @@ angular.module('kLaserCutterControoler.controllers', [])
 	$scope.work		= new Vec2(0, 0);
     $scope.unit		= "mm";
     
+    $scope.getConfig = Config.get;
 	Socket.connect(socket_host, $scope);
 	Canvas.init('coordsCanvas');
+	
+	console.log($ionicPosition.position($("#motherCanvas")));
 }])
 
 .controller('SettingsCtrl', ["$scope", "Config", function($scope, Config) {

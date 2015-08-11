@@ -25,12 +25,13 @@
     {
       "locator": "https://github.com/apache/cordova-plugin-whitelist.git#r1.0.0",
       "id": "cordova-plugin-whitelist"
-    }
+    },
+    "net.yoik.cordova.plugins.screenorientation"
   ],
   "cordovaPlatforms": [
     {
       "platform": "android",
-      "locator": "./engine/cordova-android-c0.6.1/"
+      "locator": "browser"
     }
   ]
 }

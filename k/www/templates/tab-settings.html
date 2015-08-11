@@ -3,12 +3,12 @@
     <div class="list">
      <uh ng-repeat="config in configList">   
       <label class="item item-input" ng-if="config.type=='text'">
-        <span  class="input-label">{{config.name || translate}}</span>
+        <span  class="input-label">{{config.name | translate}}</span>
         <input ng-if="config.type=='text'" type="text" ng-model="config.value" placeholder="{{config.placeholder}}" ng-change="update(config)">
      
       </label>
       <label class="item item-input" ng-if="config.type=='toggle'">
-        <span class="input-label">{{config.name || translate}}</span>
+        <span class="input-label">{{config.name | translate}}</span>
         <label class="toggle">
            <input type="checkbox" ng-model="config.value" ng-change="update(config)">
            <div class="track">

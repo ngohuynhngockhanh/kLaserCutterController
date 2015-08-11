@@ -1,17 +1,24 @@
 <ion-view view-title="{{'DASHBOARD' | translate}}">
   <ion-content class="padding">
-  <div id="container"></div>
+  <div id="container">
     <div class="list card">
-      <div class="item item-divider">{{'VISUALIZER' | translate}}&nbsp;{{status}}&nbsp;
+      <div class="item item-divider">{{'VISUALIZER' | translate}}<span ng-show="socket.connected()">&nbsp;{{status}}&nbsp;
           <label for="file" class="fileContainer" ng-show="!socket.canStop">           
            <span class="button button-small button-positive">{{'UPLOAD_A_FILE' | translate}}</span>
            <input type="file" id="siofu_input" />
-         </label>
+         </label></span>
       </div>
       <div class="item item-body">
         <div class="row responsive-sm">
           <div class="col" id="motherCanvas">
-            <canvas id="coordsCanvas"></canvas>
+            <canvas ng-show="socket.connected()" id="coordsCanvas"></canvas>
+            <div ng-show="socket.disconnected()">
+                <div>{{'SOCKET_DISCONNECTED_MESSAGE' | translate}}</div>
+                <dl>
+                    <dt>{{'HOST ADDRESS' | translate}}</dt>
+                    <dd>{{getConfig('socket_host')}}</dd>
+                </dl>
+            </div>
           </div>
           <div class="col">
             <div class="list">
@@ -51,12 +58,14 @@
             
               <div class="row responsive-sm" ng-show="!socket.canStop">
                 <div class="col">
-                  <label class="item item-input">
-                    <span class="input-label">{{'COMMANDLINE' | translate}}</span>
-                    <form ng-submit="socket.commandSubmit()">
-                      <input type="text" style="padding-left:-20px; border:1px solid black;width:100%;" ng-model="socket.commandLine">
-                    </form>
-                  </label>        
+                  <form ng-submit="socket.commandSubmit()">
+                     <div class="list">
+                       <label class="item item-input">
+                         <span class="input-label">{{'COMMANDLINE' | translate}}</span>
+                         <input type="text" style="border:1px solid black;" ng-keypress="socket.commandKeypress($event)" ng-model="socket.commandLine">
+                       </label>   
+                     </div>
+                   </form>        
                 </div>
               </div>
           </div>   
@@ -66,5 +75,6 @@
     <div ng-show="socket.showMJPG">
         <img ng-src="{{socket.mjpg}}" /> 
     </div>
+  </div>
   </ion-content>
 </ion-view>

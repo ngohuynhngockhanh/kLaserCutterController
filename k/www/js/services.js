@@ -17,7 +17,7 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 			showMJPG	: {
 				key			: 'showMJPG',
 				name		: 'DISPLAY MJPG',
-				defaultValue: false,
+				defaultValue: true,
 				type		: 'toggle'
 			}
 		};
@@ -161,7 +161,8 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
     var circle = undefined,
     	settings = {},
     	connected = false,
-    	MAX_COMMAND_MONITOR_LENGTH = 100; 
+    	MAX_COMMAND_MONITOR_LENGTH = 100,
+    	keyPressIdx = 0; 
     var progressbar = ngProgressFactory.createInstance(),
     	startedTime = 0,
     	commandToDoLength = 0;
@@ -202,13 +203,35 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 		scope.socket.commandMonitor.push(command);
 		var monitor = $("#commandMonitor");
 		monitor.html(scope.socket.commandMonitor.join("<br />"));
-		 $ionicScrollDelegate.$getByHandle('commandMonitor').scrollBottom();
+		keyPressIdx = scope.socket.commandMonitor.length - 1;
+		$ionicScrollDelegate.$getByHandle('commandMonitor').scrollBottom();
 	}
 	var commandSubmit = function() {
 		var cmd = scope.socket.commandLine;
 		scope.socket.commandLine = "";
 		socket.emit("cmd", cmd);
 		writeToCommandMonitor("> " + cmd);
+	}
+	var commandKeypress = function($event) {
+		var keyCode = $event.keyCode;
+		if (!(keyCode == 38 || keyCode == 40))
+			return true;
+			
+		var oldPressIdx, found = false;
+		oldPressIdx = keyPressIdx;
+		
+		while ((keyCode == 38 && keyPressIdx > 0) || (keyCode == 40 && keyPressIdx < scope.socket.commandMonitor.length - 1)) {
+			keyPressIdx += (keyCode == 38) ? -1 : 1;
+			if (scope.socket.commandMonitor[keyPressIdx].indexOf('> ') == 0) {
+				found = true;
+				break;	
+			}
+		}
+		if (!found)
+		keyPressIdx = oldPressIdx;
+		
+		if (scope.socket.commandMonitor[keyPressIdx] && scope.socket.commandMonitor[keyPressIdx].indexOf('> ') == 0 && scope.socket.commandMonitor[keyPressIdx])
+			scope.socket.commandLine = substr(scope.socket.commandMonitor[keyPressIdx], 2, strlen(scope.socket.commandMonitor[keyPressIdx]));
 	}
     return {
     	setStatus: setStatus,
@@ -228,16 +251,29 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 			$scope.socket.commandSubmit = commandSubmit;
 			$scope.socket.showMJPG = Config.get('showMJPG');
 			$scope.socket.mjpg = null;
+			$scope.socket.connected = this.connected;
+			$scope.socket.disconnected = this.disconnected;
+			$scope.socket.commandKeypress = commandKeypress;
 			return $scope;
     	},    	
+    	disconnected: function() {
+    		return !this.connected();
+    	},
     	disconnect: function() {
     		connected = false;
     		mjpg_default_url = null;    		
     		uploader = null;
     		this.stopHalt(true);
     		Canvas.removePath();
+    		startedTime = 0;
     		Canvas.removeSVG();
-    		socket.destroy();
+    		if (socket.connected) {
+	    		socket.disconnect();
+	    		socket.destroy();
+	    	}
+    	},
+    	connected: function() {
+    		return socket.connected;
     	},
     	connect: function(host, $scope, settings) {
     		$scope = $scope || undefined;
@@ -252,8 +288,7 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
     			
     		//setup host
     		host = host || Config.get('socket_host');   		
-    		socket = io.connect(host);
-    		console.log(socket);
+    		socket = io.connect(host, {'forceNew': true});
     		
     		//setup mjpg_default_url
     		mjpg_default_url = host.split(':');
@@ -359,7 +394,7 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 			    		circle.setLeft(Canvas.formatX(x));
 			    		Canvas.render();
 			    	}
-			    	
+
 			    	if (startedTime > 0)
 			    		scope.startedTime = formatClock();
 			    	
@@ -367,7 +402,9 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 			    	scope.$apply();
 			    }
 		    });
-		    
+		    socket.on('stopCountingTime', function() {
+		    	startedTime = 0;
+		    });
 		    var prevPoint = new Vec2(0, 0);
 			socket.on("gcode", function(data, timer2) {				
 				startedTime = timer2;
@@ -544,7 +581,7 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 		canvas.add(drawLine([0, 0, 0, height, true]));	//y coordinate
 		canvas.renderOnAddRemove = false;
 		if (ionic.Platform.isAndroid())
-			$("#commandMonitorScrolling").attr('style', 'height:200px;');
+			$("#commandMonitorScrolling").attr('style', 'height:100px;');
 	}
 	function init(id) {		
 		if (ionic.Platform.isAndroid()) {
