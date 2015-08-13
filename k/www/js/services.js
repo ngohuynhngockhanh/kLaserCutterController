@@ -19,6 +19,18 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 				name		: 'DISPLAY MJPG',
 				defaultValue: true,
 				type		: 'toggle'
+			},
+			serverLoad	: {
+				key			: 'serverLoad',
+				name		: 'SERVER LOAD',
+				defaultValue: '0',
+				type		: 'status'
+			},
+			tempGalileo	: {
+				key			: 'tempGalileo',
+				name		: 'GALILEO TEMPERATE',
+				defaultValue: '0',
+				type		: 'status',
 			}
 		};
 	
@@ -154,7 +166,7 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 		}
 	}
 })
-.factory('Socket', ['Config', 'GCode', 'Canvas', "ngProgressFactory", "$ionicPopup", "$filter", "$ionicScrollDelegate", function(Config, GCode, Canvas, ngProgressFactory, $ionicPopup, $filter, $ionicScrollDelegate) {
+.factory('Socket', ['Config', 'GCode', 'Canvas', "ngProgressFactory", "$ionicPopup", "$filter", "$ionicScrollDelegate", "$rootScope", function(Config, GCode, Canvas, ngProgressFactory, $ionicPopup, $filter, $ionicScrollDelegate, $rootScope) {
 	//open socket
     var socket = null, uploader, scope, mjpg_default_url;
     var _machineRunning = false;
@@ -335,7 +347,7 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 		    });
 		    socket.on("disconnect", function() {
 		    	if (connected) {
-		    		scope.alert($filter('translate')('CANT_CONNECT_TO_SERVER'));
+		    		$rootScope.alert($filter('translate')('CANT_CONNECT_TO_SERVER'));
 		    	}
 		    	scope.socket.mjpg = null;
 		    	connected = false;
@@ -359,6 +371,8 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 		    	}
 		    });
 		    socket.on('sendSVG', function(content) {
+		    	if (ionic.Platform.isAndroid())
+		    		return;
 		    	var index = content.indexOf("viewBox");
 		    	if (index > -1) {
 		    		Canvas.removeSVG();
@@ -370,7 +384,12 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 				Canvas.render();
 			    	
 		    });
+		    socket.on("system_log", function(log) {
+		    	Config.set('serverLoad', log['serverLoad']);
+		    	Config.set('tempGalileo', log['tempGalileo'] + "°C");
+		    });
 		    socket.on("position", function(data , machineRunning, machinePause) {
+		    	
 		    	if (Canvas.canvas() != undefined) {
 			    	if (commandToDoLength > 0)
 			    		setStatusFromNode(machineRunning, machinePause);
@@ -484,6 +503,8 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 			});
     	},
     	stopHalt: function(disconenct) {
+    		progressbar.complete(); 
+    		scope.jobPercent = '';
     		startedTime = 0;
 			socket.emit('stop');
 			setStatus(8); //1000

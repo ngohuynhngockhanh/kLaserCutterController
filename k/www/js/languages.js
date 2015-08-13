@@ -21,6 +21,8 @@ angular.module('klasercuttercontroller.languages', [])
 			"SETTINGS"				:   "Thiết đặt",
 			"HOST ADDRESS"			:   "Địa chỉ kLaserCutter",
 			"DISPLAY MJPG"			:   "Xem Camera?",
+			"SERVER LOAD"			:   "Tải máy chủ",
+			"GALILEO TEMPERATE"		:   "Nhiệt độ máy chủ"
 		}
 	);
 	$translateProvider.translations('en-US', 
@@ -44,6 +46,8 @@ angular.module('klasercuttercontroller.languages', [])
 			"SETTINGS"				:   "Settings",
 			"HOST ADDRESS"			:   "kLaserCutter's address",
 			"DISPLAY MJPG"			:   "Display camera?",
+			"SERVER LOAD"			:   "Server load",
+			"GALILEO TEMPERATE"		:   "Galileo temperate"
 		}
 	);
 })

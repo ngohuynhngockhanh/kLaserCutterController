@@ -45,11 +45,13 @@ angular.module('kLaserCutterControoler.controllers', [])
   //$scope.$on('$ionicView.enter', function(e) {
   //});
   
-  
-  $scope.configList = Config.getList();
-  $scope.update = function(config) {
-	Config.set(config.key, config.value)
-  }
+	$scope.$on('$ionicView.enter', function(e) {
+  		$scope.configList = Config.getList();
+	});
+	$scope.configList = Config.getList();
+	$scope.update = function(config) {
+		Config.set(config.key, config.value)
+	}
 }])
 
 .controller('ChatDetailCtrl', function($scope, $stateParams, Chats) {

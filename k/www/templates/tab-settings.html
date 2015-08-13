@@ -16,6 +16,10 @@
            </div>
         </label>
       </label>
+      <label class="item item-input" ng-if="config.type=='status'">
+        <span class="input-label">{{config.name | translate}}</span>
+        <span>{{config.value}}</span>
+      </label>
      </uh> 
     </div>
   </ion-content>

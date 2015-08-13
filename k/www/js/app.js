@@ -26,7 +26,8 @@ angular.module('kLaserCutterController', [
     
     $rootScope.minScreenWidth = min(screen.width, screen.height);
     
-    screen.lockOrientation(($rootScope.minScreenWidth >= 400) ? 'landscape' : 'portrait');
+    if (screen.lockOrientation)
+    	screen.lockOrientation(($rootScope.minScreenWidth >= 400) ? 'landscape' : 'portrait');
     
     
     

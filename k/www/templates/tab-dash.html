@@ -11,14 +11,15 @@
       <div class="item item-body">
         <div class="row responsive-sm">
           <div class="col" id="motherCanvas">
-            <canvas ng-show="socket.connected()" id="coordsCanvas"></canvas>
-            <div ng-show="socket.disconnected()">
-                <div>{{'SOCKET_DISCONNECTED_MESSAGE' | translate}}</div>
-                <dl>
-                    <dt>{{'HOST ADDRESS' | translate}}</dt>
-                    <dd>{{getConfig('socket_host')}}</dd>
-                </dl>
+             <div ng-show="socket.disconnected()">
+               <div>{{'SOCKET_DISCONNECTED_MESSAGE' | translate}}</div>
+               <dl>
+                  <dt>{{'HOST ADDRESS' | translate}}</dt>
+                  <dd>{{getConfig('socket_host')}}</dd>
+               </dl>
             </div>
+            <canvas ng-show="socket.connected()" id="coordsCanvas"></canvas>
+            
           </div>
           <div class="col">
             <div class="list">
