@@ -63,7 +63,7 @@
                      <div class="list">
                        <label class="item item-input">
                          <span class="input-label">{{'COMMANDLINE' | translate}}</span>
-                         <input type="text" style="border:1px solid black;" ng-keypress="socket.commandKeypress($event)" ng-model="socket.commandLine">
+                         <input type="text" style="border:1px solid black;margin-right:1px;" ng-keydown="socket.commandKeypress($event)" ng-model="socket.commandLine">
                        </label>   
                      </div>
                    </form>        
@@ -73,8 +73,8 @@
         </div>
       </div>
     </div>
-    <div ng-show="socket.showMJPG">
-        <img ng-src="{{socket.mjpg}}" /> 
+    <div ng-show="getConfig('showMJPG')" style="text-align:center;" ng-class="socket.mjpgClass">
+        <img ng-src="{{socket.mjpg}}" ng-style="{'width' : socket.mjpgStyleWidth}" ng-click="fullscreen()" on-long-press="socket.snapshot()" /> 
     </div>
   </div>
   </ion-content>

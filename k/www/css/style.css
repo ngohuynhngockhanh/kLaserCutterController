@@ -30,3 +30,16 @@ div.commandMonitor {
 #commandMonitorScrolling div {
 	padding: 2px;
 }
+
+
+.modalAbs {
+	float: left;
+	top: 0;
+	left: 0;
+	position: absolute;
+	z-index: 100001;
+	background: black;
+	width:100%;
+	margin:0;
+	padding:0;
+}

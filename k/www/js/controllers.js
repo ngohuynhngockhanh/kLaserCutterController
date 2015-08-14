@@ -1,6 +1,6 @@
-angular.module('kLaserCutterControoler.controllers', [])
+angular.module('kLaserCutterController.controllers', [])
 
-.controller('DashCtrl', ["$scope", "Config", "Socket", "Canvas", "$ionicPopup", "$filter", "$ionicPosition", function($scope, Config, Socket, Canvas, $ionicPopup, $filter, $ionicPosition) {
+.controller('DashCtrl', ["$scope", "Config", "Socket", "Canvas", "$ionicPopup", "$filter", "$ionicPosition", "$ionicScrollDelegate", function($scope, Config, Socket, Canvas, $ionicPopup, $filter, $ionicPosition, $ionicScrollDelegate) {
 	
 	
 	
@@ -39,6 +39,12 @@ angular.module('kLaserCutterControoler.controllers', [])
 	Canvas.init('coordsCanvas');
 	
 	console.log($ionicPosition.position($("#motherCanvas")));
+	$scope.socket.mjpgClass = "";
+	$scope.fullscreen = function() {
+		$scope.socket.mjpgClass = ($scope.socket.mjpgClass == "") ? "modalAbs" : "";
+		if ($scope.socket.mjpgClass == "modalAbs") 
+			$ionicScrollDelegate.scrollTop();
+	};
 }])
 
 .controller('SettingsCtrl', ["$scope", "Config", function($scope, Config) {
@@ -49,12 +55,13 @@ angular.module('kLaserCutterControoler.controllers', [])
   //
   //$scope.$on('$ionicView.enter', function(e) {
   //});
-  
+    $scope.configList;
 	$scope.$on('$ionicView.enter', function(e) {
   		$scope.configList = Config.getList();
 	});
-	$scope.configList = Config.getList();
+	
 	$scope.update = function(config) {
+		console.log(config.key + " " + config.value);
 		Config.set(config.key, config.value)
 	}
 }])

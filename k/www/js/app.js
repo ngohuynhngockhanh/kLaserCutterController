@@ -4,12 +4,14 @@ angular.module('kLaserCutterController', [
 	'ionic','ionic.service.core','ionic.service.push','ngCordova',
 	'ngProgress',
 	'pascalprecht.translate',
-	'kLaserCutterControoler.controllers',
-	'kLaserCutterControoler.services',
-	'klasercuttercontroller.languages'
+	'kLaserCutterController.controllers',
+	'kLaserCutterController.services',
+	'kLaserCutterController.languages',
+	'kLaserCutterController.directive'
 ])
 
 .run(["$rootScope", "$ionicPlatform", "$ionicSideMenuDelegate", "$filter", "$ionicPopup", function($rootScope, $ionicPlatform, $ionicSideMenuDelegate, $filter, $ionicPopup) {
+	$rootScope.minScreenWidth = min(screen.width, screen.height);
   $ionicPlatform.ready( function() {
   	
     // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
@@ -24,7 +26,7 @@ angular.module('kLaserCutterController', [
       StatusBar.styleLightContent();
     }
     
-    $rootScope.minScreenWidth = min(screen.width, screen.height);
+    
     
     if (screen.lockOrientation)
     	screen.lockOrientation(($rootScope.minScreenWidth >= 400) ? 'landscape' : 'portrait');

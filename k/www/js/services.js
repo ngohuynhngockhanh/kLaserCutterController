@@ -1,4 +1,4 @@
-angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
+angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 .factory('Config', ["localStorageService", "$translate", function(localStorageService, $translate) {
 	var config = localStorageService.get("config");
 	if (config == null)
@@ -73,9 +73,9 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 		set: function(key, value) {
 			if (angular.isNumber(value))
 				value = intval(value);
-			console.log(config[key]);
 			config[key] = value;
-			save(config);
+			console.log(config[key]);
+			this.save(config);
 		},
 		save: save,
 		getList: function() {
@@ -83,7 +83,7 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 			for (var configKey in defaultConfig) {
 				var _config = defaultConfig[configKey];
 				var ele = defaultConfig[configKey]; //clone
-				ele.value = config[configKey] || ele.defaultValue;
+				ele.value = (config[configKey] != undefined) ? config[configKey] : ele.defaultValue;
 				list.push(ele);
 			}
 			return list;
@@ -166,7 +166,7 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 		}
 	}
 })
-.factory('Socket', ['Config', 'GCode', 'Canvas', "ngProgressFactory", "$ionicPopup", "$filter", "$ionicScrollDelegate", "$ionicUser", "$ionicPush", "$rootScope", function(Config, GCode, Canvas, ngProgressFactory, $ionicPopup, $filter, $ionicScrollDelegate, $ionicUser, $ionicPush, $rootScope) {
+.factory('Socket', ['Config', 'GCode', 'Canvas', "ngProgressFactory", "$ionicPopup", "$filter", "$ionicScrollDelegate", "$ionicUser", "$ionicPush", "$rootScope", "$http", "$cordovaFile", "$cordovaFileTransfer", function(Config, GCode, Canvas, ngProgressFactory, $ionicPopup, $filter, $ionicScrollDelegate, $ionicUser, $ionicPush, $rootScope, $http, $cordovaFile, $cordovaFileTransfer) {
 	//open socket
     var socket = null, uploader, scope, mjpg_default_url;
     var _machineRunning = false;
@@ -179,7 +179,8 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
     var progressbar = ngProgressFactory.createInstance(),
     	startedTime = 0,
     	commandToDoLength = 0;
-    	progressbar.setHeight('3px');
+    	progressbar.setHeight('3px'),
+    	externalRootDirectory = "";
     var setStatus = function (status) {    	 
 		scope.socket.canStart = (status >> 3) & 1;
 		scope.socket.canStop = (status >> 2) & 1;
@@ -313,11 +314,13 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 			$scope.socket.canUnpause = false;
 			$scope.socket.commandMonitor = [];
 			$scope.socket.commandSubmit = commandSubmit;
-			$scope.socket.showMJPG = Config.get('showMJPG');
 			$scope.socket.mjpg = null;
 			$scope.socket.connected = this.connected;
 			$scope.socket.disconnected = this.disconnected;
 			$scope.socket.commandKeypress = commandKeypress;
+			$scope.socket.mjpgStyleWidth = $rootScope.minScreenWidth + 'px';	
+			$scope.socket.snapshot = this.snapshot;		
+			
 			return $scope;
     	},    	
     	disconnected: function() {
@@ -571,7 +574,36 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
     	isMachineRunning: function () {
     		return !(_machineRunning == false || _machineRunning == 0);
     	},
-    	setToken: setToken
+    	setToken: setToken,
+    	takeSnapshot: function(url, targetPath) {
+    		$cordovaFileTransfer.download(url, targetPath, {}, true)
+		    .then(function(result) {
+		    	console.log(result);
+		      	$rootScope.alert($filter('translate')('SAVED_FILE'));
+		   	}, function(err) {
+		   		console.log(err);
+		   		$rootScope.alert($filter('translate')('CANT_SAVE_FILE'));
+		    });
+    	},
+    	snapshot: function() {
+    		var _this = this;
+    		var url = str_replace("?action=stream", "?action=snapshot", scope.socket.mjpg);
+    		var filename = "snapshot-" + date('H-m-s-d-m-Y') + ".jpg";
+    		externalRootDirectory = ionic.Platform.isAndroid() ? cordova.file.externalRootDirectory : cordova.file.documentsDirectory;
+    		var targetPath = externalRootDirectory + "DCIM/kLaserCutterSnapshot/" + filename;
+    		console.log(targetPath);
+			$cordovaFile.checkDir(externalRootDirectory, "DCIM/kLaserCutterSnapshot")
+		    .then(function (success) {
+		         _this.takeSnapshot(url, targetPath);
+		    }, function (error) {
+		    	 console.log(error);
+		         $cordovaFile.createDir(externalRootDirectory, "DCIM/kLaserCutterSnapshot", true).then(function(success) {
+		         	_this.takeSnapshot(url, targetPath);
+		         }, function(error) {
+		         	console.log(error);
+		         });
+		    });
+    	}
     };
 }])
 .factory('Canvas', ['GCode', "$rootScope", function(GCode, $rootScope) {

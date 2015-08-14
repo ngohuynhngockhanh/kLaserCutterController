@@ -1,4 +1,4 @@
-angular.module('klasercuttercontroller.languages', [])
+angular.module('kLaserCutterController.languages', [])
 .config(function($translateProvider) {
 	$translateProvider.translations('vi', 
 		{
@@ -22,7 +22,11 @@ angular.module('klasercuttercontroller.languages', [])
 			"HOST ADDRESS"			:   "Địa chỉ kLaserCutter",
 			"DISPLAY MJPG"			:   "Xem Camera?",
 			"SERVER LOAD"			:   "Tải máy chủ",
-			"GALILEO TEMPERATE"		:   "Nhiệt độ máy chủ"
+			"GALILEO TEMPERATE"		:   "Nhiệt độ máy chủ",
+			
+			
+			'SAVED_FILE'			:   "Đã lưu ảnh chụp ^_^",
+			'CANT_SAVE_FILE'		:   "Không lưu ảnh được ^^!",
 		}
 	);
 	$translateProvider.translations('en-US', 
@@ -47,7 +51,10 @@ angular.module('klasercuttercontroller.languages', [])
 			"HOST ADDRESS"			:   "kLaserCutter's address",
 			"DISPLAY MJPG"			:   "Display camera?",
 			"SERVER LOAD"			:   "Server load",
-			"GALILEO TEMPERATE"		:   "Galileo temperate"
+			"GALILEO TEMPERATE"		:   "Galileo temperate",
+			
+			'SAVED_FILE'			:   "Saved file ^_^",
+			'CANT_SAVE_FILE'		:   "We can't save file to your device ^^!",
 		}
 	);
 })
