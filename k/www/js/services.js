@@ -166,7 +166,7 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 		}
 	}
 })
-.factory('Socket', ['Config', 'GCode', 'Canvas', "ngProgressFactory", "$ionicPopup", "$filter", "$ionicScrollDelegate", "$rootScope", function(Config, GCode, Canvas, ngProgressFactory, $ionicPopup, $filter, $ionicScrollDelegate, $rootScope) {
+.factory('Socket', ['Config', 'GCode', 'Canvas', "ngProgressFactory", "$ionicPopup", "$filter", "$ionicScrollDelegate", "$ionicUser", "$ionicPush", "$rootScope", function(Config, GCode, Canvas, ngProgressFactory, $ionicPopup, $filter, $ionicScrollDelegate, $ionicUser, $ionicPush, $rootScope) {
 	//open socket
     var socket = null, uploader, scope, mjpg_default_url;
     var _machineRunning = false;
@@ -174,7 +174,8 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
     	settings = {},
     	connected = false,
     	MAX_COMMAND_MONITOR_LENGTH = 100,
-    	keyPressIdx = 0; 
+    	keyPressIdx = 0, identified = false,
+    	token; 
     var progressbar = ngProgressFactory.createInstance(),
     	startedTime = 0,
     	commandToDoLength = 0;
@@ -245,6 +246,57 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 		if (scope.socket.commandMonitor[keyPressIdx] && scope.socket.commandMonitor[keyPressIdx].indexOf('> ') == 0 && scope.socket.commandMonitor[keyPressIdx])
 			scope.socket.commandLine = substr(scope.socket.commandMonitor[keyPressIdx], 2, strlen(scope.socket.commandMonitor[keyPressIdx]));
 	}
+	
+	var setToken = function(_token) {
+		token = _token;
+		socket.emit("token", token);
+	};
+	
+	$rootScope.$on('$cordovaPush:tokenReceived', function(event, data) {
+    	console.log('Ionic Push: Got token ', data.token, data.platform);
+    	setToken(data.token);
+	});
+	
+	var identifyUser = function() {
+	    console.log('Ionic User: Identifying with Ionic User service');
+	
+	    var user = $ionicUser.get();
+	    if(!user.user_id) {
+	      // Set your user_id here, or generate a random one.
+	      user.user_id = $ionicUser.generateGUID();
+	    };
+	
+	    // Add some metadata to your user object.
+	    angular.extend(user, {
+	      name: 'android',
+	      bio: 'I come from android'
+	    });
+	
+	    // Identify your user with the Ionic User Service
+	    $ionicUser.identify(user).then(function(){
+	      identified = true;
+	      pushRegister();
+	    });
+  	};
+	
+	var pushRegister = function() {
+	    console.log('Ionic Push: Registering user');
+	
+	    // Register with the Ionic Push service.  All parameters are optional.
+	    $ionicPush.register({
+	 		canShowAlert: true, //Can pushes show an alert on your screen?
+	    	canSetBadge: true, //Can pushes update app icon badges?
+	    	canPlaySound: true, //Can notifications play a sound?
+	      	canRunActionsOnWake: true, //Can run actions outside the app,
+	      	pushNotification: function() {},
+	      	onNotification: function(notification) {
+	      		// Handle new push notifications here
+	      		console.log(notification);
+	        	return true;
+	      	}
+	    });
+	};
+	
     return {
     	setStatus: setStatus,
     	setStatusFromNode: setStatusFromNode,
@@ -278,6 +330,7 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
     		this.stopHalt(true);
     		Canvas.removePath();
     		startedTime = 0;
+    		identified = false;
     		Canvas.removeSVG();
     		if (socket.connected) {
 	    		socket.disconnect();
@@ -301,6 +354,8 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
     		//setup host
     		host = host || Config.get('socket_host');   		
     		socket = io.connect(host, {'forceNew': true});
+    		if (!identified && ionic.Platform.isAndroid())
+    			identifyUser();
     		
     		//setup mjpg_default_url
     		mjpg_default_url = host.split(':');
@@ -374,10 +429,9 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
 		    	if (ionic.Platform.isAndroid())
 		    		return;
 		    	var index = content.indexOf("viewBox");
-		    	if (index > -1) {
-		    		Canvas.removeSVG();
+		    	Canvas.removeSVG();
+		    	if (index > -1)
 		    		return;
-		    	}
 		    	
 				var src = 'data:image/svg+xml;base64,'+base64_encode(content);
 				Canvas.addSVG(src, 0,  0);
@@ -516,7 +570,8 @@ angular.module('kLaserCutterControoler.services', ['LocalStorageModule'])
     	},
     	isMachineRunning: function () {
     		return !(_machineRunning == false || _machineRunning == 0);
-    	}
+    	},
+    	setToken: setToken
     };
 }])
 .factory('Canvas', ['GCode', "$rootScope", function(GCode, $rootScope) {

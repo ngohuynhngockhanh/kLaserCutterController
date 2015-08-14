@@ -1,7 +1,7 @@
 // kLaserCutterControoler
 var APP_VERSION = 0.1;
 angular.module('kLaserCutterController', [
-	'ionic',
+	'ionic','ionic.service.core','ionic.service.push','ngCordova',
 	'ngProgress',
 	'pascalprecht.translate',
 	'kLaserCutterControoler.controllers',

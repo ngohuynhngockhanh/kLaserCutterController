@@ -26,12 +26,13 @@
       "locator": "https://github.com/apache/cordova-plugin-whitelist.git#r1.0.0",
       "id": "cordova-plugin-whitelist"
     },
-    "net.yoik.cordova.plugins.screenorientation"
+    "net.yoik.cordova.plugins.screenorientation",
+    {
+      "locator": "https://github.com/phonegap-build/PushPlugin.git",
+      "id": "com.phonegap.plugins.PushPlugin"
+    }
   ],
   "cordovaPlatforms": [
-    {
-      "platform": "android",
-      "locator": "browser"
-    }
+    "android"
   ]
 }

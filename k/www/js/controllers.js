@@ -1,8 +1,13 @@
 angular.module('kLaserCutterControoler.controllers', [])
 
 .controller('DashCtrl', ["$scope", "Config", "Socket", "Canvas", "$ionicPopup", "$filter", "$ionicPosition", function($scope, Config, Socket, Canvas, $ionicPopup, $filter, $ionicPosition) {
+	
+	
+	
 	var socket_host = Config.get('socket_host');
 	$scope.$on('$ionicView.enter', function(e) {
+			
+			
 		var new_host = Config.get('socket_host');
 		if (new_host != socket_host) {
 			var update = function() {
