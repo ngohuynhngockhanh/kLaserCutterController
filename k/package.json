@@ -31,8 +31,8 @@
       "locator": "https://github.com/phonegap-build/PushPlugin.git",
       "id": "com.phonegap.plugins.PushPlugin"
     },
-    "org.apache.cordova.file",
-    "org.apache.cordova.file-transfer"
+    "org.apache.cordova.file-transfer",
+    "org.apache.cordova.file"
   ],
   "cordovaPlatforms": [
     "android"

@@ -45,9 +45,6 @@ angular.module('kLaserCutterController', [
 			template: message,
 			okText: $filter("translate")("OK")
 		});
-		alertPopup.then(function(res) {
-			console.log("Alert \n" + title + "\n" + message);
-		});
   	};
   	
   	
@@ -55,6 +52,9 @@ angular.module('kLaserCutterController', [
   	
   	
   });
+}])
+.config(["$ionicConfigProvider", function($ionicConfigProvider) {
+	$ionicConfigProvider.scrolling.jsScrolling(ionic.Platform.isAndroid());
 }])
 .config(['localStorageServiceProvider', function(localStorageServiceProvider){
   localStorageServiceProvider.setPrefix('_kLaserCutterController');

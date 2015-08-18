@@ -6,8 +6,8 @@ angular.module('kLaserCutterController.controllers', [])
 	
 	var socket_host = Config.get('socket_host');
 	$scope.$on('$ionicView.enter', function(e) {
-			
-			
+		Canvas.setVisibleSVG(Config.get('renderSVG'));	
+		Socket.setRememberDevice(Config.get('rememberDevice'));	
 		var new_host = Config.get('socket_host');
 		if (new_host != socket_host) {
 			var update = function() {
@@ -45,6 +45,8 @@ angular.module('kLaserCutterController.controllers', [])
 		if ($scope.socket.mjpgClass == "modalAbs") 
 			$ionicScrollDelegate.scrollTop();
 	};
+	Canvas.setVisibleSVG(Config.get('renderSVG'));
+	
 }])
 
 .controller('SettingsCtrl', ["$scope", "Config", function($scope, Config) {

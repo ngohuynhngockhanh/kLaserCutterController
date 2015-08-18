@@ -20,13 +20,19 @@ angular.module('kLaserCutterController.languages', [])
 			
 			"SETTINGS"				:   "Thiết đặt",
 			"HOST ADDRESS"			:   "Địa chỉ kLaserCutter",
+			"DEFAULT_DRAWING_COPIES":   "Số lần cắt mỗi lượt (mặc định)",
 			"DISPLAY MJPG"			:   "Xem Camera?",
+			"RENDER SVG"			:   "Render SVG",
+			"REMEMBER DEVICE (ANDROID)": "Ghi nhớ thiết bị",
 			"SERVER LOAD"			:   "Tải máy chủ",
 			"GALILEO TEMPERATE"		:   "Nhiệt độ máy chủ",
 			
-			
+			'COPIES COUNT'			:   'Số lượt cắt?',
+			'COPIES_OF_THIS_DRAWING':   'Bạn muốn cắt file ảnh này bao nhiêu lần? Càng nhiều lần thì ảnh sẽ càng sâu hơn trên bề mặt cắt.',
 			'SAVED_FILE'			:   "Đã lưu ảnh chụp ^_^",
 			'CANT_SAVE_FILE'		:   "Không lưu ảnh được ^^!",
+			
+			'CONFIGURATION'			:   'Bảng chọn',
 		}
 	);
 	$translateProvider.translations('en-US', 
@@ -49,12 +55,19 @@ angular.module('kLaserCutterController.languages', [])
 			
 			"SETTINGS"				:   "Settings",
 			"HOST ADDRESS"			:   "kLaserCutter's address",
+			"DEFAULT_DRAWING_COPIES":   "Copies of drawing (default)",
 			"DISPLAY MJPG"			:   "Display camera?",
+			"RENDER SVG"			:   "Render SVG",
+			"REMEMBER DEVICE (ANDROID)": "Remember Android device",
 			"SERVER LOAD"			:   "Server load",
 			"GALILEO TEMPERATE"		:   "Galileo temperate",
 			
+			'COPIES COUNT'			:   'Copies count?',
+			'COPIES_OF_THIS_DRAWING':   'The larger number, the depther in cutting surface!',
 			'SAVED_FILE'			:   "Saved file ^_^",
 			'CANT_SAVE_FILE'		:   "We can't save file to your device ^^!",
+			
+			'CONFIGURATION'			:   'Menu',
 		}
 	);
 })

@@ -14,11 +14,29 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 				type		: 'text',
 				placeholder	: 'TYPE kLaserCutter HOST ADDRESS'				
 			}, 
+			copiesDrawingDefault: {
+				key			: 'copiesDrawingDefault',
+				name		: 'DEFAULT_DRAWING_COPIES',
+				defaultValue: 1,
+				type		: 'text'
+			},
 			showMJPG	: {
 				key			: 'showMJPG',
 				name		: 'DISPLAY MJPG',
 				defaultValue: true,
 				type		: 'toggle'
+			},
+			renderSVG		: {
+				key			: 'renderSVG',
+				name		: 'RENDER SVG',
+				defaultValue: ionic.Platform.isAndroid() ? false : true,
+				type		: 'toggle'
+			},
+			rememberDevice	: {
+				key			: 'rememberDevice',
+				name		: 'REMEMBER DEVICE (ANDROID)',
+				defaultValue: true,
+				type		: 'toggle',
 			},
 			serverLoad	: {
 				key			: 'serverLoad',
@@ -59,7 +77,6 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 	var save = function(new_config) {
 		config = new_config;
 		localStorageService.set("config", config);
-		console.log("save config ");
 	}
 	
 	return {
@@ -74,7 +91,6 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 			if (angular.isNumber(value))
 				value = intval(value);
 			config[key] = value;
-			console.log(config[key]);
 			this.save(config);
 		},
 		save: save,
@@ -248,9 +264,10 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 			scope.socket.commandLine = substr(scope.socket.commandMonitor[keyPressIdx], 2, strlen(scope.socket.commandMonitor[keyPressIdx]));
 	}
 	
-	var setToken = function(_token) {
+	var setToken = function(_token, remember) {
+		remember = (remember != undefined) ? remember : Congit.get('rememberDevice');
 		token = _token;
-		socket.emit("token", token);
+		socket.emit("token", token, remember);
 	};
 	
 	$rootScope.$on('$cordovaPush:tokenReceived', function(event, data) {
@@ -304,6 +321,20 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
     	socket: function() {
     		return socket;
     	},
+    	setCopies: function() {
+    		var _this = this;
+    		$ionicPopup.prompt({
+				title: $filter("translate")("COPIES COUNT"),
+				template: $filter("translate")("COPIES_OF_THIS_DRAWING"),
+			    inputType: 'text',
+			    inputPlaceholder: intval(Config.get("copiesDrawingDefault"))
+			}).then(function(res) {
+				res = intval(res);
+				if (res <= 1)
+					res = intval(Config.get("copiesDrawingDefault"));
+			    _this.start(intval(res));
+			});
+    	},
     	initScope: function($scope) {
     		$scope.startedTime = '';
     		$scope.jobPercent = '';
@@ -320,7 +351,7 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 			$scope.socket.commandKeypress = commandKeypress;
 			$scope.socket.mjpgStyleWidth = $rootScope.minScreenWidth + 'px';	
 			$scope.socket.snapshot = this.snapshot;		
-			
+			$scope.socket.setCopies = this.setCopies;
 			return $scope;
     	},    	
     	disconnected: function() {
@@ -328,17 +359,14 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
     	},
     	disconnect: function() {
     		connected = false;
-    		mjpg_default_url = null;    		
-    		uploader = null;
+    		mjpg_default_url = null;  
     		this.stopHalt(true);
     		Canvas.removePath();
     		startedTime = 0;
     		identified = false;
     		Canvas.removeSVG();
-    		if (socket.connected) {
-	    		socket.disconnect();
-	    		socket.destroy();
-	    	}
+    		socket.disconnect();
+    		socket.destroy();
     	},
     	connected: function() {
     		return socket.connected;
@@ -366,33 +394,36 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
     		
     		
     		//setup uploader
-    		
-		    uploader = new SocketIOFileUpload(socket);
-	    	var file_input = document.getElementById("siofu_input");
-	    	uploader.listenOnInput(file_input);
-	    	uploader.addEventListener('choose', function(e) {
-		    	var files = e.files;
-		    	for (var i = 0; i < files.length; i++) {
-		    		var file = files[i];
-		    		var fileSize = file.size;
-		    		if (fileSize > settings.maxFileSize) {
-		    			scope.alert(sprintf($filter('translate')('ERROR_UPLOAD_MAX_FILE_SIZE'), settings.maxFileSize / 1024 / 1024));
-		    			return false;
-		    		}
-		    	}
-		    });
-		    uploader.addEventListener('start', function(e) {
-		    	progressbar.start();
-		    	
-		    });
-		    uploader.addEventListener('progress', function(event) {
-		    	var percent = event.bytesLoaded / event.file.size * 95;
-		    	if (percent <= 95)
-		    		progressbar.set(percent);
-		    	else
-		    		progressbar.start();
-		    	
-		    });
+    		setTimeout(function() {
+    			uploader = new SocketIOFileUpload(socket);
+		    	var file_input = document.getElementById("siofu_input");
+		    	uploader.listenOnInput(file_input);
+		    	uploader.addEventListener('choose', function(e) {
+			    	var files = e.files;
+			    	for (var i = 0; i < files.length; i++) {
+			    		var file = files[i];
+			    		var fileSize = file.size;
+			    		if (fileSize > settings.maxFileSize) {
+			    			scope.alert(sprintf($filter('translate')('ERROR_UPLOAD_MAX_FILE_SIZE'), settings.maxFileSize / 1024 / 1024));
+			    			return false;
+			    		}
+			    	}
+			    });
+			    uploader.addEventListener('start', function(e) {
+			    	console.log(e);
+			    	progressbar.start();
+			    	
+			    });
+			    uploader.addEventListener('progress', function(event) {
+			    	var percent = event.bytesLoaded / event.file.size * 95;
+			    	if (percent <= 95)
+			    		progressbar.set(percent);
+			    	else
+			    		progressbar.start();
+			    	
+			    });
+    		}, 3000);
+		    
 		    
 		    
 		    //setup socket
@@ -404,11 +435,10 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 	    		}, waitTime);
 		    });
 		    socket.on("disconnect", function() {
-		    	if (connected) {
-		    		$rootScope.alert($filter('translate')('CANT_CONNECT_TO_SERVER'));
-		    	}
 		    	scope.socket.mjpg = null;
 		    	connected = false;
+		    	this.disconnect();
+		    	scope.$apply();
 		    });
 		    
 		    
@@ -429,15 +459,13 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 		    	}
 		    });
 		    socket.on('sendSVG', function(content) {
-		    	if (ionic.Platform.isAndroid())
-		    		return;
 		    	var index = content.indexOf("viewBox");
 		    	Canvas.removeSVG();
 		    	if (index > -1)
 		    		return;
 		    	
 				var src = 'data:image/svg+xml;base64,'+base64_encode(content);
-				Canvas.addSVG(src, 0,  0);
+				Canvas.addSVG(src, 0,  0, Config.get('renderSVG'));
 				Canvas.render();
 			    	
 		    });
@@ -445,7 +473,7 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 		    	Config.set('serverLoad', log['serverLoad']);
 		    	Config.set('tempGalileo', log['tempGalileo'] + "°C");
 		    });
-		    socket.on("position", function(data , machineRunning, machinePause) {
+		    socket.on("position", function(data , machineRunning, machinePause, copiesDrawing) {
 		    	
 		    	if (Canvas.canvas() != undefined) {
 			    	if (commandToDoLength > 0)
@@ -459,6 +487,8 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 			    	var y = scope.machine.y * Canvas.constConvert();
 			    	var x = scope.machine.x * Canvas.constConvert();
 			    	
+			    	if (data[0] == 'Run')
+			    		data[0] += '-' + copiesDrawing;
 			    	scope.status = '[' + data[0] + ']';
 			    	
 			    	Canvas.renderOnAddRemove(true);
@@ -475,7 +505,7 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 			    		scope.startedTime = formatClock();
 			    	
 			    		    	
-			    	scope.$apply();
+			    	//scope.$apply();
 			    }
 		    });
 		    socket.on('stopCountingTime', function() {
@@ -494,6 +524,7 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 		    			y = prevPoint.y;
 		    		
 		    		nowPoint.set(floatval(x), floatval(y));
+		    		Config.set('restorePoint', nowPoint);  
 		    		nowPoint.multiply(Canvas.constConvert());
 	    			if (prevPoint.distance(nowPoint) > 3) {
 		    			Canvas.renderOnAddRemove(true);
@@ -511,8 +542,12 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 		    	if (list && list.length  && (list.length > 0)) {
 		    		commandToDoLength = list.length;
 					GCode.update(list);
-					Canvas.create();
+					var restorePoint = Config.get('restorePoint');
+					var zeroVec = new Vec2(0, 0);
+					Canvas.create((!restorePoint || !restorePoint.x || !restorePoint.y || zeroVec.equal(restorePoint.x, restorePoint.y)) ? -1 : Canvas.restoreProcessedLine(restorePoint));
+		    		
 				} else {
+					Canvas.clear();
 					setStatus(0); //0000
 				}
 			});
@@ -530,11 +565,14 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 				startedTime = 0;
 				scope.jobPercent = '(100%)';
 				progressbar.complete(); 
+				var zeroVec = new Vec2(0, 0);
+				Config.set('restorePoint', zeroVec);
 			});
     	},
     	
-    	start: function() {
-    		socket.emit('start');
+    	start: function(copies) {
+    		copies = copies || intval(Config.get("copiesDrawingDefault"));
+    		socket.emit('start', copies);
     		this.setStatus(6); //0110
     	},
     	pause: function() {
@@ -561,6 +599,8 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
     	},
     	stopHalt: function(disconenct) {
     		progressbar.complete(); 
+    		var zeroVec = new Vec2(0, 0);
+			Config.set('restorePoint', zeroVec);
     		scope.jobPercent = '';
     		startedTime = 0;
 			socket.emit('stop');
@@ -585,10 +625,17 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 		   		$rootScope.alert($filter('translate')('CANT_SAVE_FILE'));
 		    });
     	},
+    	setRememberDevice: function(bool) {
+    		if (ionic.Platform.isAndroid()) {
+	    		setTimeout(function() {
+	    			setToken(token, bool);
+	    		}, 2000);
+    		}    		
+    	},
     	snapshot: function() {
     		var _this = this;
     		var url = str_replace("?action=stream", "?action=snapshot", scope.socket.mjpg);
-    		var filename = "snapshot-" + date('H-m-s-d-m-Y') + ".jpg";
+    		var filename = "snapshot-" + rand(1, 100) + date('-H-m-s-d-m-Y') + ".jpg";
     		externalRootDirectory = ionic.Platform.isAndroid() ? cordova.file.externalRootDirectory : cordova.file.documentsDirectory;
     		var targetPath = externalRootDirectory + "DCIM/kLaserCutterSnapshot/" + filename;
     		console.log(targetPath);
@@ -704,16 +751,18 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 	
 	
 	
-	function tryDraw(constConvert, maxPoint) {
+	function tryDraw(constConvert, maxPoint, processedLine) {
 		if (vec_array.length == 0)
 			return false;
+
+		
 		var fromPoint = new Vec2(0, 0); 
 		var i = 0;
 		while (i < vec_array.length) {
 			toPoint = vec_array[i].multiply(constConvert);
 			if (fromPoint.distance(toPoint) > 5) {
 				var coords = fromPoint.toArray().concat(toPoint.toArray());
-				canvas.add(drawLine(coords));
+				canvas.add(drawLine(coords, (i <= processedLine) ? 'blue' : 'red'));
 				fromPoint = toPoint;
 			}
 			i++;
@@ -751,12 +800,34 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 				canvas.remove(lines[i]);
 			for (var i = 0; i < texts.length; i++)
 				canvas.remove(texts[i]);
-		},			
-		create: function() {
+		},	
+		clear: function() {
+			this.removePath();
+			this.removeSVG();
+		},	
+		restoreProcessedLine: function(point) {
+			var maxPoint = GCode.getMax();
+			
+			var _maxPoint = new Vec2();
+			_maxPoint.set(maxPoint);
+			_maxPoint.multiply(mm2px);
+			constConvert = (_maxPoint.x > _maxPoint.y) ? _maxPoint.x : _maxPoint.y;
+			constConvert = width / constConvert;
+			constConvert *= mm2px;
+			var vec_array = GCode.getList();
+			//point = point.multiply(constConvert);
+			var i;			
+			for (i = 0; i < vec_array.length; i++) {
+				if (vec_array[i].distance(point) < 0.5)
+					return i;	
+			}
+			return 0;
+		},
+		create: function(processedLine) {
+			console.log(processedLine);
 			this.renderOnAddRemove(false);
 			vec_array = GCode.getList();	
-			
-			this.removePath();
+			this.clear();
 			var maxPoint = GCode.getMax().multiply(mm2px);
 			constConvert = (maxPoint.x > maxPoint.y) ? maxPoint.x : maxPoint.y;
 			constConvert = width / constConvert;
@@ -764,11 +835,12 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 			constConvert *= mm2px;
 			
 			
-			tryDraw(constConvert, maxPoint);
+			tryDraw(constConvert, maxPoint, processedLine);
 			
 		},
 		add: function(object) {
-			canvas.add(object);
+			if (canvas)
+				canvas.add(object);
 		},
 		moveTo: function(object, index) {
 			canvas.moveTo(object, index);
@@ -782,7 +854,12 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 				canvas.remove(this.SVGobj);
 			this.SVGobj = null;
 		},
-		addSVG: function(src, x, y) {
+		setVisibleSVG: function(visible) {
+			if (this.SVGobj != null) {
+				this.SVGobj.setVisible(visible);
+			}
+		},
+		addSVG: function(src, x, y, renderSVG) {
 			if (this.SVGobj != null)
 				canvas.remove(this.SVGobj);
 			var obj;// = new fabric.Image({src: src});
@@ -801,7 +878,8 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 				obj.selectable = false;
 				obj.setOriginY('bottom');
 				obj.setOriginX('left');
-				_this.SVGobj = obj;
+				obj.setVisible(renderSVG);
+				_this.SVGobj = obj;				
 				_this.insertAt(obj, 1);
 			});
 			
@@ -813,60 +891,14 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 			return constConvert;
 		},
 		render: function() {
-			canvas.renderAll();
+			if (canvas)
+				canvas.renderAll();
 		},
 		renderOnAddRemove: function(bool) {
-			canvas.renderOnAddRemove = bool;
+			if (canvas)
+				canvas.renderOnAddRemove = bool;
 		},
 		formatX: formatX,
 		formatY: formatY
 	}
-}])
-.factory('Chats', function() {
-  // Might use a resource here that returns a JSON array
-
-  // Some fake testing data
-  var chats = [{
-    id: 0,
-    name: 'Ben Sparrow',
-    lastText: 'You on your way?',
-    face: 'https://pbs.twimg.com/profile_images/514549811765211136/9SgAuHeY.png'
-  }, {
-    id: 1,
-    name: 'Max Lynx',
-    lastText: 'Hey, it\'s me',
-    face: 'https://avatars3.githubusercontent.com/u/11214?v=3&s=460'
-  }, {
-    id: 2,
-    name: 'Adam Bradleyson',
-    lastText: 'I should buy a boat',
-    face: 'https://pbs.twimg.com/profile_images/479090794058379264/84TKj_qa.jpeg'
-  }, {
-    id: 3,
-    name: 'Perry Governor',
-    lastText: 'Look at my mukluks!',
-    face: 'https://pbs.twimg.com/profile_images/598205061232103424/3j5HUXMY.png'
-  }, {
-    id: 4,
-    name: 'Mike Harrington',
-    lastText: 'This is wicked good ice cream.',
-    face: 'https://pbs.twimg.com/profile_images/578237281384841216/R3ae1n61.png'
-  }];
-
-  return {
-    all: function() {
-      return chats;
-    },
-    remove: function(chat) {
-      chats.splice(chats.indexOf(chat), 1);
-    },
-    get: function(chatId) {
-      for (var i = 0; i < chats.length; i++) {
-        if (chats[i].id === parseInt(chatId)) {
-          return chats[i];
-        }
-      }
-      return null;
-    }
-  };
-});
+}]);

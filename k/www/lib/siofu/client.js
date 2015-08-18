@@ -82,6 +82,7 @@
 	 */
 	var _listenedReferences = [];
 	var _listenTo = function (object, eventName, callback, bubble) {
+		
 		object.addEventListener(eventName, callback, bubble);
 		_listenedReferences.push(arguments);
 	};
@@ -127,7 +128,10 @@
 			offset = 0,
 			newName;
 		uploadedFiles.push(file);
-
+		//ksp hacks. make it works in android :v
+		if (reader._realReader)
+			reader = reader._realReader;
+			
 		// Calculate chunk size
 		var chunkSize = self.chunkSize;
 		if (chunkSize >= file.size || chunkSize <= 0) chunkSize = file.size;
@@ -200,6 +204,7 @@
 		var loadCb = function (event) {
 			// Transmit the newly loaded data to the server and emit a client event
 			var bytesLoaded = Math.min(offset+chunkSize, file.size);
+			
 			transmitPart(offset, bytesLoaded, event.target.result);
 			_dispatch("progress", {
 				file: file,

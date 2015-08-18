@@ -5,8 +5,9 @@
       <div class="item item-divider">{{'VISUALIZER' | translate}}<span ng-show="socket.connected()">&nbsp;{{status}}&nbsp;
           <label for="file" class="fileContainer" ng-show="!socket.canStop">           
            <span class="button button-small button-positive">{{'UPLOAD_A_FILE' | translate}}</span>
-           <input type="file" id="siofu_input" />
-         </label></span>
+           <input name="file" type="file" id="siofu_input" />
+         </label>
+         </span>         
       </div>
       <div class="item item-body">
         <div class="row responsive-sm">
@@ -24,7 +25,7 @@
           <div class="col">
             <div class="list">
               <div class="button-bar">
-                <a class="button button-balanced" ng-click="socket.start()" ng-show="socket.canStart" href="#">{{'START' | translate}}</a>
+                <a class="button button-balanced" on-long-press="socket.setCopies()" ng-click="socket.start()" ng-show="socket.canStart" href="#">{{'START' | translate}}</a>
                 <a class="button button-assertive" ng-click="socket.stop()" ng-show="socket.canStop" href="#">{{'STOP' | translate}}</a>
                 <a class="button button-energized" ng-click="socket.pause()" ng-show="socket.canPause" href="#">{{'PAUSE' | translate}}</a>
                 <a class="button button-calm" ng-click="socket.unpause()" ng-show="socket.canUnpause" href="#">{{'UNPAUSE' | translate}}</a>
@@ -63,7 +64,7 @@
                      <div class="list">
                        <label class="item item-input">
                          <span class="input-label">{{'COMMANDLINE' | translate}}</span>
-                         <input type="text" style="border:1px solid black;margin-right:1px;" ng-keydown="socket.commandKeypress($event)" ng-model="socket.commandLine">
+                         <input type="text" style="border:1px solid black;margin-right:10px;" ng-keydown="socket.commandKeypress($event)" ng-model="socket.commandLine">
                        </label>   
                      </div>
                    </form>        
