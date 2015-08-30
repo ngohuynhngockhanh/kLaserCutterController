@@ -208,6 +208,16 @@ function is_numeric(mixed_var) {
   return (typeof mixed_var === 'number' || (typeof mixed_var === 'string' && whitespace.indexOf(mixed_var.slice(-1)) === -
     1)) && mixed_var !== '' && !isNaN(mixed_var);
 }
+function strtolower(str) {
+  //  discuss at: http://phpjs.org/functions/strtolower/
+  // original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+  // improved by: Onno Marsman
+  //   example 1: strtolower('Kevin van Zonneveld');
+  //   returns 1: 'kevin van zonneveld'
+
+  return (str + '')
+    .toLowerCase();
+}
 function rand(min, max) {
   //  discuss at: http://phpjs.org/functions/rand/
   // original by: Leslie Hoare

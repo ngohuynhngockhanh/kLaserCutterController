@@ -2,12 +2,15 @@ angular.module('kLaserCutterController.controllers', [])
 
 .controller('DashCtrl', ["$scope", "Config", "Socket", "Canvas", "$ionicPopup", "$filter", "$ionicPosition", "$ionicScrollDelegate", function($scope, Config, Socket, Canvas, $ionicPopup, $filter, $ionicPosition, $ionicScrollDelegate) {
 	
+	$scope.started = false;
 	
 	
 	var socket_host = Config.get('socket_host');
 	$scope.$on('$ionicView.enter', function(e) {
 		Canvas.setVisibleSVG(Config.get('renderSVG'));	
-		Socket.setRememberDevice(Config.get('rememberDevice'));	
+		Socket.setRememberDevice(Config.get('rememberDevice'));
+		if ($scope.started)
+			Socket.setFeedRate(Config.get('feedRate'));	
 		var new_host = Config.get('socket_host');
 		if (new_host != socket_host) {
 			var update = function() {
@@ -22,7 +25,8 @@ angular.module('kLaserCutterController.controllers', [])
 					template: $filter('translate')('THE MACHINE IS RUNNING. ARE YOU SURE TO CHANGE TO THE NEW SOCKET ADDRESS?')
 				});
 				confirmPopup.then(function(res) {
-					update();
+					if (res)
+						update();
 				});
 			} else
 				update();
@@ -46,6 +50,9 @@ angular.module('kLaserCutterController.controllers', [])
 			$ionicScrollDelegate.scrollTop();
 	};
 	Canvas.setVisibleSVG(Config.get('renderSVG'));
+	setTimeout(function() {
+		$scope.started = true;
+	}, 1000);
 	
 }])
 
