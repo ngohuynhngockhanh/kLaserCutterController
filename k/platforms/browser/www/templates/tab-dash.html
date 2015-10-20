@@ -1,0 +1,82 @@
+<ion-view view-title="{{'DASHBOARD' | translate}}">
+  <ion-content class="padding">
+  <div id="container">
+    <div class="list card">
+      <div class="item item-divider">{{'VISUALIZER' | translate}}<span ng-show="socket.connected()">&nbsp;{{status}}&nbsp;
+          <label for="file" class="fileContainer" ng-show="!socket.canStop">           
+           <span class="button button-small button-positive">{{'UPLOAD_A_FILE' | translate}}</span>
+           <input name="file" type="file" id="siofu_input" />
+         </label>
+         </span>         
+      </div>
+      <div class="item item-body">
+        <div class="row responsive-sm">
+          <div class="col" id="motherCanvas">
+             <div ng-show="socket.disconnected()">
+               <div>{{'SOCKET_DISCONNECTED_MESSAGE' | translate}}</div>
+               <dl>
+                  <dt>{{'HOST ADDRESS' | translate}}</dt>
+                  <dd>{{getConfig('socket_host')}}</dd>
+               </dl>
+            </div>
+            <canvas ng-show="socket.connected()" id="coordsCanvas"></canvas>
+            
+          </div>
+          <div class="col">
+            <div class="list">
+              <div class="button-bar">
+                <a class="button button-balanced" on-long-press="socket.setCopies()" ng-click="socket.start()" ng-show="socket.canStart" href="#">{{'START' | translate}}</a>
+                <a class="button button-assertive" ng-click="socket.stop()" ng-show="socket.canStop" href="#">{{'STOP' | translate}}</a>
+                <a class="button button-energized" ng-click="socket.pause()" ng-show="socket.canPause" href="#">{{'PAUSE' | translate}}</a>
+                <a class="button button-calm" ng-click="socket.unpause()" ng-show="socket.canUnpause" href="#">{{'UNPAUSE' | translate}}</a>
+              </div>
+              <div class="item item-icon-left" href="#">
+                <i class="icon ion-gear-b"></i>
+                {{'MACHINE_COORDINATES' | translate}} {{startedTime}} {{jobPercent}}
+              </div>
+              <div class="row responsive-sm">
+                <div class="col">
+                  <div class="item item-thumbnail-left">
+                    <img ng-src="img/x.jpg">
+                    <h2>{{machine.x}}</h2>
+                    <p>{{unit}}</p>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="item item-thumbnail-left">
+                    <img ng-src="img/y.jpg">
+                    <h2>{{machine.y}}</h2>
+                    <p>{{unit}}</p>
+                  </div>
+                </div>    
+              </div>
+              <div class="row responsive-sm">
+                <div class="col commandMonitor">
+                  <ion-scroll zooming="true" id="commandMonitorScrolling" delegate-handle="commandMonitor" direction="xy">
+                    <div id="commandMonitor"></div>
+                  </ion-scroll>
+                </div>                
+              </div>
+            
+              <div class="row responsive-sm" ng-show="!socket.canStop">
+                <div class="col">
+                  <form ng-submit="socket.commandSubmit()">
+                     <div class="list">
+                       <label class="item item-input">
+                         <span class="input-label">{{'COMMANDLINE' | translate}}</span>
+                         <input type="text" style="border:1px solid black;margin-right:10px;" ng-keydown="socket.commandKeypress($event)" ng-model="socket.commandLine">
+                       </label>   
+                     </div>
+                   </form>        
+                </div>
+              </div>
+          </div>   
+        </div>
+      </div>
+    </div>
+    <div ng-show="getConfig('showMJPG')" style="text-align:center;" ng-class="socket.mjpgClass">
+        <img ng-src="{{socket.mjpg}}" ng-style="{'width' : socket.mjpgStyleWidth}" ng-click="fullscreen()" on-long-press="socket.snapshot()" /> 
+    </div>
+  </div>
+  </ion-content>
+</ion-view>

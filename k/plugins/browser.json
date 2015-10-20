@@ -1,0 +1,69 @@
+{
+    "prepare_queue": {
+        "installed": [],
+        "uninstalled": []
+    },
+    "config_munge": {
+        "files": {
+            "config.xml": {
+                "parents": {
+                    "/*": [
+                        {
+                            "xml": "<feature name=\"Device\"><param name=\"browser-package\" value=\"Device\" /></feature>",
+                            "count": 1
+                        }
+                    ]
+                }
+            }
+        }
+    },
+    "installed_plugins": {
+        "com.ionic.keyboard": {
+            "PACKAGE_NAME": "com.ionicframework.k574783"
+        },
+        "com.maginsoft.mfilechooser": {
+            "PACKAGE_NAME": "com.ionicframework.k574783"
+        },
+        "cordova-plugin-whitelist": {
+            "PACKAGE_NAME": "com.ionicframework.k574783"
+        },
+        "org.apache.cordova.device": {
+            "PACKAGE_NAME": "com.ionicframework.k574783"
+        },
+        "org.apache.cordova.dialogs": {
+            "PACKAGE_NAME": "com.ionicframework.k574783"
+        },
+        "org.apache.cordova.globalization": {
+            "PACKAGE_NAME": "com.ionicframework.k574783"
+        },
+        "org.apache.cordova.inappbrowser": {
+            "PACKAGE_NAME": "com.ionicframework.k574783"
+        },
+        "org.apache.cordova.network-information": {
+            "PACKAGE_NAME": "com.ionicframework.k574783"
+        },
+        "org.apache.cordova.splashscreen": {
+            "PACKAGE_NAME": "com.ionicframework.k574783"
+        },
+        "org.jshybugger.cordova": {
+            "PACKAGE_NAME": "com.ionicframework.k574783"
+        },
+        "net.yoik.cordova.plugins.screenorientation": {
+            "PACKAGE_NAME": "com.ionicframework.k574783"
+        },
+        "cordova-plugin-crosswalk-webview": {
+            "PACKAGE_NAME": "com.ionicframework.k574783"
+        },
+        "com.phonegap.plugins.PushPlugin": {
+            "PACKAGE_NAME": "com.ionicframework.k574783"
+        },
+        "org.apache.cordova.file-transfer": {
+            "PACKAGE_NAME": "com.ionicframework.k574783"
+        }
+    },
+    "dependent_plugins": {
+        "org.apache.cordova.file": {
+            "PACKAGE_NAME": "com.ionicframework.k574783"
+        }
+    }
+}

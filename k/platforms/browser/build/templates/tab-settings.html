@@ -1,0 +1,26 @@
+<ion-view view-title="{{'SETTINGS' | translate}}">
+  <ion-content>
+    <div class="list">
+     <uh ng-repeat="config in configList">   
+      <label class="item item-input" ng-if="config.type=='text'||config.type=='number'||config.type=='password'">
+        <span  class="input-label">{{config.name | translate}}</span>
+        <input type="{{config.type}}" ng-model="config.value" placeholder="{{config.placeholder}}" ng-change="update(config)">
+     
+      </label>
+      <label class="item item-input" ng-if="config.type=='toggle'">
+        <span class="input-label">{{config.name | translate}}</span>
+        <label class="toggle">
+           <input type="checkbox" ng-model="config.value" ng-change="update(config)">
+           <div class="track">
+              <div class="handle"></div>
+           </div>
+        </label>
+      </label>
+      <label class="item item-input" ng-if="config.type=='status'">
+        <span class="input-label">{{config.name | translate}}</span>
+        <span>{{config.value}}</span>
+      </label>
+     </uh> 
+    </div>
+  </ion-content>
+</ion-view>
