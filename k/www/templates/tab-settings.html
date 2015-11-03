@@ -4,7 +4,7 @@
      <uh ng-repeat="config in configList">   
       <label class="item item-input" ng-if="config.type=='text'||config.type=='number'||config.type=='password'">
         <span  class="input-label">{{config.name | translate}}</span>
-        <input type="{{config.type}}" ng-model="config.value" placeholder="{{config.placeholder}}" ng-change="update(config)">
+        <input type="{{config.type}}" ng-model="config.value" placeholder="{{config.placeholder | translate}}" ng-change="update(config)">
      
       </label>
       <label class="item item-input" ng-if="config.type=='toggle'">
@@ -19,6 +19,14 @@
       <label class="item item-input" ng-if="config.type=='status'">
         <span class="input-label">{{config.name | translate}}</span>
         <span>{{config.value}}</span>
+      </label>
+      <label class="item item-select" ng-if="config.type=='select'">
+        <span class="input-label">{{config.name | translate}}</span>
+        <span>
+        	<select ng-model="config.value" ng-change="update(config)">
+		    	<option ng-repeat="option in config.list" value="{{option}}" ng-selected="config.value==option">{{option}}</option>
+		    </select>
+    	</span>
       </label>
      </uh> 
     </div>

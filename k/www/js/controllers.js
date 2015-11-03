@@ -72,6 +72,8 @@ angular.module('kLaserCutterController.controllers', [])
 	$scope.update = function(config) {
 		console.log(config.key + " " + config.value);
 		Config.set(config.key, config.value)
+		if (config.onChange)
+			config.onChange(config);
 	}
 }])
 
