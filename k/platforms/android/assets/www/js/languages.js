@@ -39,6 +39,9 @@ angular.module('kLaserCutterController.languages', [])
 			'UPLOAD_PICTURE'		:   'Khắc ảnh',
 			'SET_RESOLUTION_MESSAGE':   'Tỉ lệ pixel / mm ảnh. Tỉ lệ 3.5433 là tỉ lệ đẹp nhất. Tỉ lệ càng nhỏ, thời gian biên dịch và khắc càng nhanh.',
 			'TYPE_kLaserCutter_HOST_ADDRESS': 'Gõ địa chỉ IP của kLaserCutter',
+			'WEBCAM RESOLUTION'		:	'Độ phân giải của Webcam',
+			
+			'MAX_LASER_POWER'		:	'Công suất laser tối đa'
 			
 		}
 	);
@@ -82,6 +85,9 @@ angular.module('kLaserCutterController.languages', [])
 			'SET_RESOLUTION_MESSAGE':   'Set resolution (pixel/mm). 3.5433 is the best resolution. The less resolution, the faster engraving',
 			
 			'TYPE_kLaserCutter_HOST_ADDRESS': 'Type kLaserCutter host address',
+			'WEBCAM RESOLUTION'		:	'Webcam resolution',
+			
+			'MAX_LASER_POWER'		:	'Max laser power'
 		}
 	);
 })
@@ -94,6 +100,7 @@ angular.module('kLaserCutterController.languages', [])
 		'vi_vi': 'vi',
 		'vi_VI': 'vi'
 	})
-	.determinePreferredLanguage();
+	.preferredLanguage('vi')
+	//.determinePreferredLanguage();
 }])
 ;

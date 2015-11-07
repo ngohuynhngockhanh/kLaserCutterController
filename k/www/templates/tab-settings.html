@@ -8,9 +8,10 @@
      
       </label>
       <label class="item item-input" ng-if="config.type=='range'">
-        <span  class="input-label">{{config.name | translate}}</span>
-        <input type="{{config.type}}" min="0" max="100" ng-model="config.value" placeholder="{{config.placeholder | translate}}" ng-change="update(config)">
-     
+        <span  class="input-label">{{config.name | translate}} {{config.value}}%</span>
+        <div class="range clear">
+        	<input type="{{config.type}}" min="0" max="100" ng-model="config.value" placeholder="{{config.placeholder | translate}}" ng-change="update(config)">
+     	</div>
       </label>
       <label class="item item-input" ng-if="config.type=='toggle'">
         <span class="input-label">{{config.name | translate}}</span>

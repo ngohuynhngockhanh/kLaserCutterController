@@ -9,9 +9,11 @@ angular.module('kLaserCutterController.controllers', [])
 	$scope.$on('$ionicView.enter', function(e) {
 		Canvas.setVisibleSVG(Config.get('renderSVG'));	
 		Socket.setRememberDevice(Config.get('rememberDevice'));
+		Socket.setMaxLaserPower(Config.get('maxLaserPower'));
 		if ($scope.started)
 			Socket.setFeedRate(Config.get('feedRate'));	
 		var new_host = Config.get('socket_host');
+		//if you updated host
 		if (new_host != socket_host) {
 			var update = function() {
 				Socket.disconnect()

@@ -28,6 +28,12 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 				defaultValue: 1,
 				type		: 'number'
 			},
+			maxLaserPower: {
+				key			: 'maxLaserPower',
+				name		: 'MAX_LASER_POWER',
+				defaultValue: 100,
+				type		: 'range'
+			},
 			showMJPG	: {
 				key			: 'showMJPG',
 				name		: 'DISPLAY MJPG',
@@ -604,25 +610,27 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 		    var nowPoint = new Vec2(0, 0);
 			socket.on("gcode", function(data, timer2) {				
 				startedTime = timer2;
-		    	var x = GCode.getPosFromCommand('X', data.command);
-		    	var y = GCode.getPosFromCommand('Y', data.command);
-		    	nowPoint.set(oldPoint);
-		    	if (!(x == undefined && y == undefined)) {
-		    		if (x == undefined)
-		    			x = oldPoint.x;
-	    			if (y == undefined)
-		    			y = oldPoint.y;
-		    		nowPoint.set(floatval(x), floatval(y));
-		    		Config.set('restorePoint', nowPoint);
-		    		oldPoint.set(nowPoint);  
-		    				    		
-		    		nowPoint.multiply(Canvas.constConvert());
-	    			Canvas.renderOnAddRemove(true);
-	    			if (nowPoint.distance(prevPoint) > 4) {
-	    				Canvas.add(Canvas.drawLine(prevPoint.toArray().concat(nowPoint.toArray()), 'blue'));
-	    				prevPoint.set(nowPoint);
-	    			}
-		    	}		
+				if (!ionic.Platform.isAndroid()) {
+			    	var x = GCode.getPosFromCommand('X', data.command);
+			    	var y = GCode.getPosFromCommand('Y', data.command);
+			    	nowPoint.set(oldPoint);
+			    	if (!(x == undefined && y == undefined)) {
+			    		if (x == undefined)
+			    			x = oldPoint.x;
+		    			if (y == undefined)
+			    			y = oldPoint.y;
+			    		nowPoint.set(floatval(x), floatval(y));
+			    		Config.set('restorePoint', nowPoint);
+			    		oldPoint.set(nowPoint);  
+			    				    		
+			    		nowPoint.multiply(Canvas.constConvert());
+		    			Canvas.renderOnAddRemove(true);
+		    			if (nowPoint.distance(prevPoint) > 4) {
+		    				Canvas.add(Canvas.drawLine(prevPoint.toArray().concat(nowPoint.toArray()), 'blue'));
+		    				prevPoint.set(nowPoint);
+		    			}
+			    	}		
+				}
 		    	var percent = 99.9 - (data.length / ((commandToDoLength == 0) ? 1 : commandToDoLength) * 99.9);
 		    	scope.jobPercent = sprintf("(%3.1f", percent) + '%)';
 		    	progressbar.set(percent);
@@ -653,6 +661,7 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 			
 			socket.on('settings', function(settings) {
 				Config.set('feedRate', intval(settings.feedRate));
+				Config.set('maxLaserPower', intval(settings.maxLaserPower))
 				scope.$apply();
 			});
 			
@@ -724,6 +733,10 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
     	setFeedRate: function(feedRate) {
     		feedRate = intval(feedRate);
     		socket.emit("feedRate", feedRate);
+    	},
+    	setMaxLaserPower: function(power) {
+    		power = intval(power);
+    		socket.emit("maxLaserPower", power);
     	},
     	setRememberDevice: function(bool) {
     		if (token != undefined) {

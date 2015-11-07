@@ -9,9 +9,11 @@ angular.module('kLaserCutterController.controllers', [])
 	$scope.$on('$ionicView.enter', function(e) {
 		Canvas.setVisibleSVG(Config.get('renderSVG'));	
 		Socket.setRememberDevice(Config.get('rememberDevice'));
+		Socket.setMaxLaserPower(Config.get('maxLaserPower'));
 		if ($scope.started)
 			Socket.setFeedRate(Config.get('feedRate'));	
 		var new_host = Config.get('socket_host');
+		//if you updated host
 		if (new_host != socket_host) {
 			var update = function() {
 				Socket.disconnect()
@@ -72,15 +74,7 @@ angular.module('kLaserCutterController.controllers', [])
 	$scope.update = function(config) {
 		console.log(config.key + " " + config.value);
 		Config.set(config.key, config.value)
+		if (config.onChange)
+			config.onChange(config);
 	}
-}])
-
-.controller('ChatDetailCtrl', function($scope, $stateParams, Chats) {
-  $scope.chat = Chats.get($stateParams.chatId);
-})
-
-.controller('AccountCtrl', function($scope) {
-  $scope.settings = {
-    enableFriends: true
-  };
-});
+}]);

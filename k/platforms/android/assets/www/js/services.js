@@ -1,6 +1,7 @@
 angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 .factory('Config', ["localStorageService", "$translate", function(localStorageService, $translate) {
 	var config = localStorageService.get("config");
+	var __Config = this;
 	if (config == null)
 		config = {};
 		
@@ -26,6 +27,12 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 				name		: 'DEFAULT_DRAWING_COPIES',
 				defaultValue: 1,
 				type		: 'number'
+			},
+			maxLaserPower: {
+				key			: 'maxLaserPower',
+				name		: 'MAX_LASER_POWER',
+				defaultValue: 100,
+				type		: 'range'
 			},
 			showMJPG	: {
 				key			: 'showMJPG',
@@ -56,6 +63,13 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 				name		: 'GALILEO TEMPERATE',
 				defaultValue: '0',
 				type		: 'status',
+			},
+			webcamResolution: {
+				key			: 'webcamResolution',
+				name		: 'WEBCAM RESOLUTION',
+				defaultValue: "auto",
+				list		: ["auto"],
+				type		: 'select'
 			}
 		};
 	
@@ -79,6 +93,10 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 		get: function(key) {
 			var res = (config[key] != null) ? config[key] : "";
 			return res;
+		},
+		//set list for select type
+		setArgv: function(key, argName, argValue) {
+			defaultConfig[key][argName] = argValue;
 		},
 		set: function(key, value) {
 			if (angular.isNumber(value))
@@ -455,7 +473,7 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 			    	}
 			    });
 			    uploader.addEventListener('start', function(e) {
-			    	console.log(e);
+			    	//console.log(e);
 			    	progressbar.start();
 			    	
 			    });
@@ -489,6 +507,14 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 		    	connected = false;
 		    	$state.transitionTo("tab.dash");
 		    });
+		    
+		    socket.on('webcamSizeList', function(list) {
+		    	list.push("auto");
+		    	Config.setArgv('webcamResolution', 'list', list);
+		    	Config.setArgv('webcamResolution', 'onChange', function(config) {
+		    		socket.emit('webcamChangeResolution', config.value);
+		    	})
+		    })
 		    
 		    
 		    socket.on('percent', function(percent) {
@@ -584,25 +610,27 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 		    var nowPoint = new Vec2(0, 0);
 			socket.on("gcode", function(data, timer2) {				
 				startedTime = timer2;
-		    	var x = GCode.getPosFromCommand('X', data.command);
-		    	var y = GCode.getPosFromCommand('Y', data.command);
-		    	nowPoint.set(oldPoint);
-		    	if (!(x == undefined && y == undefined)) {
-		    		if (x == undefined)
-		    			x = oldPoint.x;
-	    			if (y == undefined)
-		    			y = oldPoint.y;
-		    		nowPoint.set(floatval(x), floatval(y));
-		    		Config.set('restorePoint', nowPoint);
-		    		oldPoint.set(nowPoint);  
-		    				    		
-		    		nowPoint.multiply(Canvas.constConvert());
-	    			Canvas.renderOnAddRemove(true);
-	    			if (nowPoint.distance(prevPoint) > 4) {
-	    				Canvas.add(Canvas.drawLine(prevPoint.toArray().concat(nowPoint.toArray()), 'blue'));
-	    				prevPoint.set(nowPoint);
-	    			}
-		    	}		
+				if (!ionic.Platform.isAndroid()) {
+			    	var x = GCode.getPosFromCommand('X', data.command);
+			    	var y = GCode.getPosFromCommand('Y', data.command);
+			    	nowPoint.set(oldPoint);
+			    	if (!(x == undefined && y == undefined)) {
+			    		if (x == undefined)
+			    			x = oldPoint.x;
+		    			if (y == undefined)
+			    			y = oldPoint.y;
+			    		nowPoint.set(floatval(x), floatval(y));
+			    		Config.set('restorePoint', nowPoint);
+			    		oldPoint.set(nowPoint);  
+			    				    		
+			    		nowPoint.multiply(Canvas.constConvert());
+		    			Canvas.renderOnAddRemove(true);
+		    			if (nowPoint.distance(prevPoint) > 4) {
+		    				Canvas.add(Canvas.drawLine(prevPoint.toArray().concat(nowPoint.toArray()), 'blue'));
+		    				prevPoint.set(nowPoint);
+		    			}
+			    	}		
+				}
 		    	var percent = 99.9 - (data.length / ((commandToDoLength == 0) ? 1 : commandToDoLength) * 99.9);
 		    	scope.jobPercent = sprintf("(%3.1f", percent) + '%)';
 		    	progressbar.set(percent);
@@ -627,13 +655,13 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 				if (log.ok == false && scope.socket.mjpg != null)
 					scope.socket.mjpg = null;
 				else if (log.ok)
-					scope.socket.mjpg =  (log.startAgain || scope.socket.mjpg == null) ? sprintf(mjpg_default_url, log.port, intval(time())) : scope.socket.mjpg; 
-				
-				
+					scope.socket.mjpg =  (log.startAgain || scope.socket.mjpg == null) ? sprintf(mjpg_default_url, log.port, intval(time())) : scope.socket.mjpg;
+				//console.log(log);
 			});
 			
 			socket.on('settings', function(settings) {
 				Config.set('feedRate', intval(settings.feedRate));
+				Config.set('maxLaserPower', intval(settings.maxLaserPower))
 				scope.$apply();
 			});
 			
@@ -695,16 +723,20 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
     	takeSnapshot: function(url, targetPath) {
     		$cordovaFileTransfer.download(url, targetPath, {}, true)
 		    .then(function(result) {
-		    	console.log(result);
+		    	//console.log(result);
 		      	$rootScope.alert($filter('translate')('SAVED_FILE'));
 		   	}, function(err) {
-		   		console.log(err);
+		   		//console.log(err);
 		   		$rootScope.alert($filter('translate')('CANT_SAVE_FILE'));
 		    });
     	},
     	setFeedRate: function(feedRate) {
     		feedRate = intval(feedRate);
     		socket.emit("feedRate", feedRate);
+    	},
+    	setMaxLaserPower: function(power) {
+    		power = intval(power);
+    		socket.emit("maxLaserPower", power);
     	},
     	setRememberDevice: function(bool) {
     		if (token != undefined) {
@@ -719,16 +751,16 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
     		var filename = "snapshot-" + rand(1, 100) + date('-H-m-s-d-m-Y') + ".jpg";
     		externalRootDirectory = ionic.Platform.isAndroid() ? cordova.file.externalRootDirectory : cordova.file.documentsDirectory;
     		var targetPath = externalRootDirectory + "DCIM/kLaserCutterSnapshot/" + filename;
-    		console.log(targetPath);
+    		//console.log(targetPath);
 			$cordovaFile.checkDir(externalRootDirectory, "DCIM/kLaserCutterSnapshot")
 		    .then(function (success) {
 		         _this.takeSnapshot(url, targetPath);
 		    }, function (error) {
-		    	 console.log(error);
+		    	 //console.log(error);
 		         $cordovaFile.createDir(externalRootDirectory, "DCIM/kLaserCutterSnapshot", true).then(function(success) {
 		         	_this.takeSnapshot(url, targetPath);
 		         }, function(error) {
-		         	console.log(error);
+		         	//console.log(error);
 		         });
 		    });
     	}
@@ -999,16 +1031,16 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 				canvas.remove(this.imageObj);
 			var _this = this;
 			var obj;
-			console.log(src);
+			//console.log(src);
 			src = str_replace('./', '/', src);
 			src = str_replace('///', '/', src);
 			src = str_replace('//upload/', '/upload/', src);
-			console.log(src);
+			//console.log(src);
 			fabric.Image.fromURL(src, function(oImg) {
 				obj = oImg;
 				x = x || 0;
 				y = y || 0;
-				console.log(x +' ' + y);
+				//console.log(x +' ' + y);
 				x = formatX(x);
 				y = formatY(y);
 				obj.setTop(y);
@@ -1026,7 +1058,7 @@ angular.module('kLaserCutterController.services', ['LocalStorageModule'])
 				_this.imageObj = obj;
 				if (!sendQueue) {
 					constConvert = scale * mm2px;
-					console.log(obj.getHeight());
+					//console.log(obj.getHeight());
 					_this.drawCoorsText(new Vec2(imageWidth / mm2px, imageHeight / mm2px));
 				}
 			});
