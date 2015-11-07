@@ -7,6 +7,11 @@
         <input type="{{config.type}}" ng-model="config.value" placeholder="{{config.placeholder | translate}}" ng-change="update(config)">
      
       </label>
+      <label class="item item-input" ng-if="config.type=='range'">
+        <span  class="input-label">{{config.name | translate}}</span>
+        <input type="{{config.type}}" min="0" max="100" ng-model="config.value" placeholder="{{config.placeholder | translate}}" ng-change="update(config)">
+     
+      </label>
       <label class="item item-input" ng-if="config.type=='toggle'">
         <span class="input-label">{{config.name | translate}}</span>
         <label class="toggle">
